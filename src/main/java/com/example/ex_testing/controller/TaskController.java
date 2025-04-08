@@ -4,6 +4,7 @@ import com.example.ex_testing.DTO.TaskResponse;
 import com.example.ex_testing.Model.Task;
 import com.example.ex_testing.Model.User;
 import com.example.ex_testing.Repositories.RoleRepository;
+import com.example.ex_testing.Service.Impl.ProjectServiceImpl;
 import com.example.ex_testing.Service.Impl.TaskServiceImpl;
 import com.example.ex_testing.Service.Impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class TaskController {
     private final TaskServiceImpl taskService;
     private final UserServiceImpl userService;
     private final RoleRepository roleRepository;
+    private final ProjectServiceImpl projectServiceImpl;
 
     @PostMapping
     public ResponseEntity<Task> createTask(
@@ -47,6 +49,7 @@ public class TaskController {
         task.setStatus(status);
         task.setCreatedAt(LocalDateTime.now());
         task.setProjectId(projectId);
+        task.setAssignedUserId(assignedUserId);
 
         taskService.save(task);
         return ResponseEntity.status(HttpStatus.CREATED).body(task);
@@ -61,6 +64,10 @@ public class TaskController {
         Task task = taskService.getById(id);
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        if (projectServiceImpl.getById(task.getProjectId()).getUserId().equals(user.getId())) {
+            TaskResponse response = new TaskResponse(task);
+            return ResponseEntity.ok(response);
         }
 
         if (!user.getRoles().contains(roleRepository.findById(2L).get()) && !task.getAssignedUserId().equals(user.getId())) {
